@@ -138,7 +138,9 @@ if [ "$1" = 'postgres' ]; then
 
     echo 'Add Shared Preload Libraries'
     sed -i -e "s/.*shared_preload_libraries.*/shared_preload_libraries='timescaledb'/g" /var/lib/postgresql/data/postgresql.conf
-		echo
+		echo 'SET authorized_keys'
+    mkdir /var/lib/postgresql/.ssh
+    echo $PGPUBKEY > /var/lib/postgresql/.ssh/authorized_keys
 		echo 'PostgreSQL init process complete; ready for start up.'
 		echo
 	fi

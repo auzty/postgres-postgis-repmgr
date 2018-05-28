@@ -61,6 +61,7 @@ RUN apt-get update \
     postgresql-9.6-repmgr \
     openssh-server \
     wget \
+    supervisor \
     postgresql-server-dev-$PG_MAJOR \
 	&& rm -rf /var/lib/apt/lists/*
 
@@ -77,14 +78,17 @@ RUN mkdir -p "$PGDATA" && chown -R postgres:postgres "$PGDATA" && chmod 777 "$PG
 VOLUME /var/lib/postgresql/data
 
 # Add timescaledb
-RUN wget https://timescalereleases.blob.core.windows.net/debian/timescaledb-postgresql-9.6_0.9.1~debian7_amd64.deb && dpkg -i timescaledb-postgresql-9.6_0.9.1~debian7_amd64.deb && rm timescaledb-postgresql-9.6_0.9.1~debian7_amd64.deb 
+RUN wget https://timescalereleases.blob.core.windows.net/debian/timescaledb-postgresql-9.6_0.9.2~debian7_amd64.deb && dpkg -i timescaledb-postgresql-9.6_0.9.2~debian7_amd64.deb && rm timescaledb-postgresql-9.6_0.9.2~debian7_amd64.deb
 RUN echo "shared_preload_libraries = 'timescaledb'" >> /var/lib/postgresql/data/postgresql.conf
 # End timescaledb installing
 
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN ln -s usr/local/bin/docker-entrypoint.sh / # backwards compat
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-ENTRYPOINT ["docker-entrypoint.sh"]
+RUN mkdir /var/run/sshd
+RUN usermod -d /var/lib/postgresql/ -s /bin/bash postgres
+COPY supervisord.conf /supervisord.conf
+ENTRYPOINT ["/usr/bin/supervisord","-c","/supervisord.conf"]
 
-EXPOSE 5432
-CMD ["postgres"]
+EXPOSE 5432 22
+#CMD ["postgres"]
